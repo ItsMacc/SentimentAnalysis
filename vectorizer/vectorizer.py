@@ -4,13 +4,13 @@ import platform
 # Determine the OS and set the shared library path
 if platform.system() == "Windows":
     # For Windows, load the .dll file
-    vectorizer = ctypes.CDLL("Vectorizer\\windows\\vectorizer.dll")
+    v = ctypes.CDLL("Vectorizer\\windows\\vectorizer.dll")
 elif platform.system() == "Darwin":
     # For macOS, load the .so file
-    vectorizer = ctypes.CDLL("Vectorizer/macOS/vectorizer.so")
+    v = ctypes.CDLL("Vectorizer/macOS/vectorizer.so")
 elif platform.system() == "Linux":
     # For Linux, load the .so file
-    vectorizer = ctypes.CDLL("Vectorizer/linux/vectorizer.so")
+    v = ctypes.CDLL("Vectorizer/linux/vectorizer.so")
 else:
     raise OSError("Unsupported operating system")
 
@@ -21,25 +21,25 @@ class SentimentVector(ctypes.Structure):
                 ("intensity", ctypes.c_double)]
 
 # Set return types for functions
-vectorizer.create.restype = ctypes.POINTER(SentimentVector)
-vectorizer.s2v.restype = ctypes.POINTER(SentimentVector)
-vectorizer.v2s.restype = ctypes.c_double
-vectorizer.combine.restype = ctypes.POINTER(SentimentVector)
+v.create.restype = ctypes.POINTER(SentimentVector)
+v.s2v.restype = ctypes.POINTER(SentimentVector)
+v.v2s.restype = ctypes.c_double
+v.combine.restype = ctypes.POINTER(SentimentVector)
 
 # Set argument types for functions
-vectorizer.create.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_double]
-vectorizer.s2v.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_double]
-vectorizer.v2s.argtypes = [ctypes.POINTER(SentimentVector)]
-vectorizer.combine.argtypes = [ctypes.POINTER(SentimentVector), ctypes.POINTER(SentimentVector)]
+v.create.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_double]
+v.s2v.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_double]
+v.v2s.argtypes = [ctypes.POINTER(SentimentVector)]
+v.combine.argtypes = [ctypes.POINTER(SentimentVector), ctypes.POINTER(SentimentVector)]
 
 def _create(magnitude, polarity, intensity):
-    return vectorizer.create(magnitude, polarity, intensity)
+    return v.create(magnitude, polarity, intensity)
 
 def s2v(magnitude, polarity, intensity):
     return _create(magnitude, polarity, intensity)
 
 def v2s(sentiment_vector):
-    return vectorizer.v2s(sentiment_vector)
+    return v.v2s(sentiment_vector)
 
 def combine(v1, v2):
-    return vectorizer.combine(v1, v2)
+    return v.combine(v1, v2)
