@@ -1,4 +1,5 @@
 from math import atan
+from Vectorizer import vectorizer
 import re
 
 class SentimentAnalyzer:
@@ -103,9 +104,12 @@ class SentimentAnalyzer:
         # Adjust sentiment based on negations
         negation_adjustment = self.__adjust_for_negations(base_sentiment, negation_count)
 
-        # Final sentiment score calculation
-        sentiment_score = base_sentiment * negation_adjustment * quantifier_multiplier * diminisher_multiplier
-        return 0.745 * atan(sentiment_score)
+        # Convert sentiment into SentimentVector
+        intensity = quantifier_multiplier * diminisher_multiplier
+        vector = vectorizer.s2v(base_sentiment, negation_adjustment, intensity)
+
+        # return score
+        return vectorizer.v2s(vector)
 
     # A function to account for the negations in the sentence
     @staticmethod
