@@ -46,7 +46,7 @@ struct SentimentVector* combine(struct SentimentVector* v1, struct SentimentVect
 
     new_magnitutde = v1->magnitude + v2->magnitude;
 
-    // Polarity adjustment
+    // Polarity adjustment (NEEDS WORK)
     if (v1->polarity * v2->polarity == 1) {
         // When both polarities are same, take any one
         new_polarity = v1->polarity; 

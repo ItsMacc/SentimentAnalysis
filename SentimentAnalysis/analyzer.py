@@ -42,6 +42,8 @@ class SentimentAnalyzer:
 
     # A function to calculate the sentiment of a message
     def evaluate_sentiment(self, message):
+        message = self.__clean_message(message)
+
         vector = self.__compute_sentiment(message)
         vectorizer.toString(vector)
 
