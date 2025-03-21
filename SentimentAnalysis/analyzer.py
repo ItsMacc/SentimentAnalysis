@@ -1,4 +1,3 @@
-from math import atan
 from Vectorizer import vectorizer
 import re
 
@@ -41,25 +40,14 @@ class SentimentAnalyzer:
         self.__decay_factor = 0.65  # Exponential decay factor for previous sentiment
 
 
-    # ---- HELPER FUNCTIONS ----
-
     # A function to calculate the sentiment of a message
     def evaluate_sentiment(self, message):
-        message = self.__clean_message(message)
+        vector = self.__compute_sentiment(message)
+        vectorizer.toString(vector)
 
-        sentiment_score = 0
-        # Base case: if no conjunctions are present, calculate sentiment directly
-        if not any(conjunction in message for conjunction in self.__conjunctions):
-            sentiment_score = self.__compute_sentiment(message)
-            return sentiment_score
+        return vectorizer.v2s(vector)
 
-        # If conjunctions are present, split the message and evaluate each part
-        sentences = self.__handle_conjunctions(message)
-        for sentence in sentences:
-            sentiment_score = self.__compute_sentiment(sentence)
-            print(sentence, sentiment_score)
-
-        return sentiment_score
+    # ---- HELPER FUNCTIONS ----
 
     # A function to calculate the sentiment of a sentence
     def __compute_sentiment(self, sentence):
@@ -98,8 +86,6 @@ class SentimentAnalyzer:
 
         # Base sentiment calculation
         base_sentiment = positive_count - negative_count
-        if base_sentiment == 0:
-            base_sentiment = quantifier_multiplier - diminisher_multiplier
 
         # Adjust sentiment based on negations
         negation_adjustment = self.__adjust_for_negations(base_sentiment, negation_count)
@@ -109,17 +95,24 @@ class SentimentAnalyzer:
         vector = vectorizer.s2v(base_sentiment, negation_adjustment, intensity)
 
         # return score
-        return vectorizer.v2s(vector)
+        return vector
 
     # A function to account for the negations in the sentence
     @staticmethod
     def __adjust_for_negations(base_sentiment, negation_count):
-        if base_sentiment > 0 and negation_count % 2 == 1:
-            return -1
-        elif base_sentiment < 0 and negation_count % 2 == 1:
-            return 0
-        else:
-            return 1
+        if negation_count == 0:
+            return 1  # No negation, return positive sentiment
+
+        is_odd_negation = negation_count % 2 == 1
+
+        if base_sentiment > 0 and is_odd_negation:
+            return -1  # Positive sentiment becomes negative
+        elif base_sentiment < 0 and is_odd_negation:
+            return 0  # Negative sentiment becomes neutral
+        elif base_sentiment == 0:
+            return -1 if is_odd_negation else 1  # Neutral becomes negative if odd negation, else positive
+
+        return 1  # Default to positive sentiment for other cases
 
     # A function to split the sentence into conjunctions
     def __handle_conjunctions(self, sentence):

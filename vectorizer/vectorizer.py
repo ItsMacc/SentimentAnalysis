@@ -43,3 +43,6 @@ def v2s(sentiment_vector):
 
 def combine(v1, v2):
     return v.combine(v1, v2)
+
+def toString(vector):
+    return v.toString(vector)

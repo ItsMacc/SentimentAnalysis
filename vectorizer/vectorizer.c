@@ -27,8 +27,8 @@ double v2s(struct SentimentVector* v) {
     double base_sentiment;
 
     // Adjust for base-sentiment
-    if (v->magnitude == 0) {
-        base_sentiment = v->intensity;
+    if (v->magnitude == 0 && v->intensity != 1) {
+        base_sentiment = fabs(1 - v->intensity);
     } else {
         base_sentiment = v->magnitude;
     }
@@ -48,12 +48,21 @@ struct SentimentVector* combine(struct SentimentVector* v1, struct SentimentVect
 
     // Polarity adjustment
     if (v1->polarity * v2->polarity == 1) {
-        new_polarity = v1->polarity;
-    } else if(v1->polarity * v2->polarity == -1) {
-        new_polarity = -1;
+        // When both polarities are same, take any one
+        new_polarity = v1->polarity; 
+    } else if (v1->polarity * v2->polarity == -1) {
+        if (abs(v1->magnitude) == abs(v2->magnitude)) {
+            // If polarities are different, and magnitude of sentiments is the same, take polarity = 0
+            new_polarity = 0;
+        } else {
+            // If magnitudes are different, take polarity of sentiment with greater magnitude value
+            new_polarity = (abs(v1->magnitude) > abs(v2->magnitude)) ? v1->polarity : v2->polarity;
+        }
     } else if (v1->polarity == 0 && v2->polarity != 0) {
-        new_polarity = v2->polarity;
+        // Take non-zero polarity
+        new_polarity = v2->polarity; 
     } else if (v1->polarity != 0 && v2->polarity == 0) {
+        // Take non-zero polarity
         new_polarity = v1->polarity;
     } else {
         new_polarity = 0;
@@ -81,8 +90,8 @@ void toString(struct SentimentVector* v) {
 };
 
 int main(){
-    // struct SentimentVector* v1 = create(1, -1, 1.2);
-    // struct SentimentVector* v2 = create(-1, 1, 1);
+    // struct SentimentVector* v1 = create(1, -1, 1);
+    // struct SentimentVector* v2 = create(1, 1, 1);
 
     // struct SentimentVector* final = combine(v1, v2);
     // toString(final);
