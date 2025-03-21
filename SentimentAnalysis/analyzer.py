@@ -18,7 +18,8 @@ class SentimentAnalyzer:
     DIMINISHERS = {
         "somewhat": 0.81, "kind-of": 0.74, "a bit": 0.7, "slightly": 0.65,
         "partially": 0.67, "mildly": 0.71, "a-little": 0.75, "fairly": 0.83,
-        "moderately": 0.88, "sort-of": 0.8, "not-really": 0.63
+        "moderately": 0.88, "sort-of": 0.8, "not-really": 0.63,
+        "sometimes": 0.84
     }
 
     CONJUNCTIONS = {"and", "or", "but", "because", "since", "so", "therefore",
@@ -44,9 +45,33 @@ class SentimentAnalyzer:
         Evaluates the sentiment of the given message.
         """
         cleaned_message = self.__clean_message(message)
-        sentiment_vector = self.__compute_sentiment(cleaned_message)
 
-        return vectorizer.v2s(sentiment_vector)
+        sentiment_vector = None
+
+        # Base case: No conjunctions present
+        if not any(conjunction in message for conjunction in self.CONJUNCTIONS):
+            sentiment_vector = self.__compute_sentiment(cleaned_message)
+        else:
+            # If conjunctions are present, split the message and evaluate each part
+            sentence_parts = self.__handle_conjunctions(message)
+            sentiment_vectors = []
+
+            for sentence in sentence_parts:
+                # Compute sentiment for each part
+                part_vector = self.__compute_sentiment(sentence)
+                sentiment_vectors.append(part_vector)
+
+            # Combine all sentiment vectors into one
+            if sentiment_vectors:
+                sentiment_vector = sentiment_vectors[0]
+                for i in range(1, len(sentiment_vectors)):
+                    sentiment_vector = vectorizer.combine(sentiment_vector, sentiment_vectors[i])
+
+        # Return the final sentiment score
+        return vectorizer.v2s(sentiment_vector) if sentiment_vector else 0
+
+    # ---- HELPER FUNCTIONS ----
+
 
     def __compute_sentiment(self, sentence):
         """
@@ -114,6 +139,36 @@ class SentimentAnalyzer:
             return -1 if is_odd_negation else 1  # Neutral becomes negative if odd negation, else positive
 
         return 1
+
+    def __handle_conjunctions(self, sentence):
+        """
+        Splits the sentence into parts based on conjunctions.
+
+        Args:
+            sentence (str): The input sentence to be split.
+
+        Returns:
+            list: A list of sentence parts, split at conjunctions.
+        """
+        words = sentence.split()
+        conjunction_indices = [0]  # List to store indices of conjunctions
+
+        # Find indices of conjunctions in the sentence
+        for i, word in enumerate(words):
+            if word in self.CONJUNCTIONS:
+                conjunction_indices.append(
+                    i + 1)  # Append index after the conjunction
+
+        conjunction_indices.append(
+            len(words))  # Append the final index (end of sentence)
+
+        # Split the sentence into parts based on conjunction indices
+        sentence_parts = [
+            " ".join(words[conjunction_indices[i]:conjunction_indices[i + 1]])
+            for i in range(len(conjunction_indices) - 1)
+        ]
+
+        return sentence_parts
 
     @staticmethod
     def __clean_message(message):
