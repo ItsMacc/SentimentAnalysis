@@ -9,17 +9,16 @@ class SentimentAnalyzer:
                  "havent"}
 
     QUANTIFIERS = {
-        "really": 1.2, "at-all": 1.25, "absolutely": 1.3, "totally": 1.27,
-        "very": 1.12, "entirely": 1.35, "quite": 1.15, "extremely": 1.32,
-        "highly": 1.4, "definitely": 1.45, "too": 1.25, "completely": 1.45,
-        "a lot": 1.34, "more": 1.16, "much": 1.19
+        'very': 1.41, 'extremely': 1.51, 'really': 1.53, 'too': 1.57,
+        'more': 1.48, 'totally': 1.59, 'much': 1.52, 'quite': 1.43,
+        'absolutely': 1.57, 'entirely': 1.52, 'completely': 1.63,
+        'highly': 1.26, 'definitely': 1.33
     }
 
     DIMINISHERS = {
-        "somewhat": 0.81, "kind-of": 0.74, "a bit": 0.7, "slightly": 0.65,
-        "partially": 0.67, "mildly": 0.71, "a-little": 0.75, "fairly": 0.83,
-        "moderately": 0.88, "sort-of": 0.8, "not-really": 0.63,
-        "sometimes": 0.84
+        'sometimes': 0.39, 'mildly': 0.84, 'somewhat': 0.45, 'slightly': 0.49,
+        'partially': 0.51, 'fairly': 0.52, 'moderately': 0.63, 'sort-of': 0.75,
+        'kind-of': 0.57
     }
 
     CONJUNCTIONS = {"and", "or", "but", "because", "since", "so", "therefore",
