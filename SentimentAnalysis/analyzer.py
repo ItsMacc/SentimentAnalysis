@@ -5,8 +5,8 @@ from Vectorizer import vectorizer
 class SentimentAnalyzer:
     # Constants for negations, quantifiers, diminishers, and conjunctions
     NEGATIONS = {"not", "no", "never", "none", "nothing", "neither", "dont",
-                 "wont", "cant", "shouldnt",
-                 "wouldnt", "wasnt", "isnt", "havent"}
+                 "wont", "cant", "shouldnt", "wouldnt", "wasnt", "isnt",
+                 "havent"}
 
     QUANTIFIERS = {
         "really": 1.2, "at-all": 1.25, "absolutely": 1.3, "totally": 1.27,
@@ -23,13 +23,11 @@ class SentimentAnalyzer:
     }
 
     CONJUNCTIONS = {"and", "or", "but", "because", "since", "so", "therefore",
-                    "due to", "although",
-                    "while", "nor", "either", "neither", "unless", "until",
-                    "when", "if", "as",
-                    "in-case", "provided-that", "even-though", "so-that",
-                    "thus"}
+                    "due to", "although", "while", "nor", "either",
+                    "neither", "unless", "until", "when", "if", "as",
+                    "in-case", "provided-that", "even-though", "so-that"}
 
-    def __init__(self, positive_words_file, negative_words_file):
+    def __init__(self, positive_words_file, negative_words_file, model="1.0"):
         """
         Initializes the SentimentAnalyzer with lists of positive and negative words.
         """
@@ -39,6 +37,8 @@ class SentimentAnalyzer:
         # Initialize variables to track the entire conversation
         self.__previous_sentiment_score = 0
         self.__decay_factor = 0.65  # Exponential decay factor for previous sentiment
+
+        self.model = model
 
     def evaluate_sentiment(self, message):
         """
