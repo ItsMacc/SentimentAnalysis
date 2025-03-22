@@ -51,39 +51,45 @@ struct SentimentVector* combine(struct SentimentVector* v1, struct SentimentVect
     double eff_intensity1 = compute_effective_intensity(v1);
     double eff_intensity2 = compute_effective_intensity(v2);
 
+    new_intensity = (eff_intensity1 > eff_intensity2) ? v1->intensity : v2->intensity;;
+
     // Case 1: Same polarity
     if (v1->polarity * v2->polarity == 1) {
-        new_magnitude = (v1->magnitude) + (v2->magnitude);
-        new_polarity = v1->polarity;
-        new_intensity = (eff_intensity1 > eff_intensity2) ? v1->intensity : v2->intensity;
-
-        if (v1->magnitude * v2->magnitude > 0) {
-            new_polarity = v1->polarity;
-        } else if (v1->magnitude * v2->magnitude < 0) {
-            new_polarity = -1;
-        } else if (v1->magnitude == 0 && v2->magnitude == 0) {
-            new_magnitude = (eff_intensity1 > eff_intensity2) ? 
-            (v1->intensity == 1 ? 0 : v1->intensity) : 
-            (v2->intensity == 1 ? 0 : v2->intensity);
-        }
-    } 
+        new_magnitude = v1->magnitude + v2->magnitude;
+        new_polarity = v1->polarity; // Same as input polarities
+    }
     // Case 2: Opposite polarity
-    else {
-        new_polarity = -1; // Always negative when opposite polarities mix
-        new_intensity = (eff_intensity1 > eff_intensity2) ? v1->intensity : v2->intensity;
+    else if (v1->polarity * v2->polarity == -1) {
+        // Calculate the net magnitude
+        new_magnitude = v1->magnitude * v1->polarity + v2->magnitude * v2->polarity;
 
-        if (v1->magnitude * v2->magnitude * v1->polarity * v2->polarity > 0) {
-            new_magnitude = abs(v1->magnitude) + abs(v2->magnitude);
-        } else {
-            new_magnitude = (eff_intensity1 > eff_intensity2) ? 
-            (v1->intensity == 1 ? 0 : v1->intensity) : 
-            (v2->intensity == 1 ? 0 : v2->intensity);
+        // Determine the resulting polarity based on the net magnitude
+        if (new_magnitude >= 0) {
+            new_polarity = 1; // Positive
+        } else if (new_magnitude < 0) {
+            new_polarity = -1; // Negative
         }
+        // Take the absolute value of the net magnitude
+        new_magnitude = abs(new_magnitude);
+    }
+    // Case 3: One or both polarities are zero
+    else {
+        // Combine magnitudes (considering their signs and polarities)
+        new_magnitude = v1->magnitude * v1->polarity + v2->magnitude * v2->polarity;
+
+        // Determine the resulting polarity based on the net magnitude
+        if (new_magnitude >= 0) {
+            new_polarity = 1; // Positive
+        } else if (new_magnitude < 0) {
+            new_polarity = -1; // Negative
+        }
+
+        // Take the absolute value of the net magnitude
+        new_magnitude = abs(new_magnitude);
     }
 
     return create(new_magnitude, new_polarity, new_intensity);
 }
-
 
 // Function to compute effective strength (magnitude × effective intensity)
 double compute_effective_intensity(struct SentimentVector* v) {
@@ -98,9 +104,4 @@ char* toString(struct SentimentVector* v) {
     snprintf(result, sizeof(result), "SentimentVector: [magnitude: %d, polarity: %d, intensity: %.4f]\n", v->magnitude, v->polarity, v->intensity);
 
     return result;
-}
-
-
-int main() {
-    return 0;
 }
