@@ -30,8 +30,8 @@ double v2s(struct SentimentVector* v);
 // A function to combine 2 sentiment vectors
 struct SentimentVector* combine(struct SentimentVector* v1, struct SentimentVector* v2);
 
-// A function to compute the effective strength
-double compute_effective_strength(struct SentimentVector* v);
+// A function to compute the effective intensity
+double compute_effective_intensity(struct SentimentVector* v);
 
 // A function to print details about Sentiment Vector
 void toString(struct SentimentVector* v);

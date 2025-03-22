@@ -41,74 +41,52 @@ double v2s(struct SentimentVector* v) {
 
 // A function to combine 2 sentiment vectors
 struct SentimentVector* combine(struct SentimentVector* v1, struct SentimentVector* v2) {
+    if (!v1 || !v2) return NULL; // Safety check
+
     int new_magnitude;
     int new_polarity;
     double new_intensity;
 
-    // Compute effective strengths
-    double strength_v1 = compute_effective_strength(v1);
-    double strength_v2 = compute_effective_strength(v2);
+    // Calculate effective intensities
+    double eff_intensity1 = compute_effective_intensity(v1);
+    double eff_intensity2 = compute_effective_intensity(v2);
 
-    // Combine polarities
+    // Case 1: Same polarity
     if (v1->polarity * v2->polarity == 1) {
-        // Both polarities are the same
-        new_polarity = v1->polarity;
-    } else if (v1->polarity * v2->polarity == -1) {
-        // Polarities are different
-        if (strength_v1 == strength_v2) {
-            // If effective strengths are equal, set polarity to neutral
-            new_polarity = 0;
+        new_magnitude = v1->magnitude + v2->magnitude;
+        new_polarity = (eff_intensity1 > eff_intensity2) ? v1->polarity : v2->polarity;
+        new_intensity = (eff_intensity1 > eff_intensity2) ? v1->intensity : v2->intensity;
+
+        if (v1->magnitude * v1->polarity * v2->magnitude * v2->polarity > 0) {
+            new_polarity = v1->polarity;
+        } else if (v1->magnitude * v1->polarity * v2->magnitude * v2->polarity < 0) {
+            new_polarity = -1;
         } else {
-            // Use the polarity of the sentiment with the higher effective strength
-            new_polarity = (strength_v1 > strength_v2) ? v1->polarity : v2->polarity;
+            new_magnitude = (v1->magnitude == 0 && v2->magnitude == 0) ? 0 : 
+                            (eff_intensity1 > eff_intensity2) ? v1->intensity : v2->intensity;
         }
-    } else if (v1->polarity == 0 && v2->polarity != 0) {
-        // One polarity is neutral, use the non-neutral one
-        new_polarity = v2->polarity;
-    } else if (v1->polarity != 0 && v2->polarity == 0) {
-        // One polarity is neutral, use the non-neutral one
-        new_polarity = v1->polarity;
-    } else {
-        // Both polarities are neutral
-        new_polarity = 0;
+    } 
+    // Case 2: Opposite polarity
+    else {
+        new_polarity = -1; // Always negative when opposite polarities mix
+        new_intensity = (eff_intensity1 > eff_intensity2) ? v1->intensity : v2->intensity;
+
+        if (v1->magnitude * v2->magnitude * v1->polarity * v2->polarity > 0) {
+            new_magnitude = abs(v1->magnitude) + abs(v2->magnitude);
+        } else {
+            new_magnitude = (v1->magnitude == 0 && v2->magnitude == 0) ? 0 : 
+                            (eff_intensity1 > eff_intensity2) ? v1->intensity : v2->intensity;
+        }
     }
 
-    // Combine magnitudes
-    if (v1->polarity * v2->polarity == 1) {
-        // Both polarities are the same, add magnitudes
-        new_magnitude = v1->magnitude + v2->magnitude;
-    } else if (v1->polarity * v2->polarity == -1) {
-        // Polarities are different, subtract magnitudes
-        new_magnitude = abs(v1->magnitude - v2->magnitude);
-    } else {
-        // One or both polarities are neutral
-        new_magnitude = v1->magnitude + v2->magnitude;
-    }
-
-    // Combine intensities
-    if (v1->intensity >= 1 && v2->intensity >= 1) {
-        // Both are quantifiers, use the maximum intensity
-        new_intensity = fmax(v1->intensity, v2->intensity);
-    } else if (v1->intensity <= 1 && v2->intensity <= 1) {
-        // Both are diminishers, use the minimum intensity
-        new_intensity = fmin(v1->intensity, v2->intensity);
-    } else {
-        // One is a quantifier, the other is a diminisher
-        double effective_intensity_v1 = (v1->intensity >= 1) ? (v1->intensity - 1) : (1 - v1->intensity);
-        double effective_intensity_v2 = (v2->intensity >= 1) ? (v2->intensity - 1) : (1 - v2->intensity);
-
-        // Use the intensity with the higher effective intensity
-        new_intensity = (effective_intensity_v1 > effective_intensity_v2) ? v1->intensity : v2->intensity;
-    }
-
-    // Create and return the combined SentimentVector
     return create(new_magnitude, new_polarity, new_intensity);
 }
 
+
 // Function to compute effective strength (magnitude × effective intensity)
-double compute_effective_strength(struct SentimentVector* v) {
+double compute_effective_intensity(struct SentimentVector* v) {
     double effective_intensity = (v->intensity >= 1) ? (v->intensity - 1) : (1 - v->intensity);
-    return v->magnitude * effective_intensity;
+    return effective_intensity;
 }
 
 // A function to print details about Sentiment Vector
