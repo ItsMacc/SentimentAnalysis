@@ -12,13 +12,13 @@ class SentimentAnalyzer:
         'very': 1.41, 'extremely': 1.51, 'really': 1.53, 'too': 1.57,
         'more': 1.48, 'totally': 1.59, 'much': 1.52, 'quite': 1.43,
         'absolutely': 1.57, 'entirely': 1.52, 'completely': 1.63,
-        'highly': 1.26, 'definitely': 1.33
+        'highly': 1.26, 'definitely': 1.33, 'a-lot': 1.55, 'at-all': 1.35
     }
 
     DIMINISHERS = {
         'sometimes': 0.39, 'mildly': 0.84, 'somewhat': 0.45, 'slightly': 0.49,
         'partially': 0.51, 'fairly': 0.52, 'moderately': 0.63, 'sort-of': 0.75,
-        'kind-of': 0.57
+        'kind-of': 0.57, 'a bit': 0.8, 'a-little': 0.5, 'not-really': 0.3
     }
 
     CONJUNCTIONS = {"and", "or", "but", "because", "since", "so", "therefore",
@@ -193,6 +193,24 @@ class SentimentAnalyzer:
 
         for contraction, replacement in contractions.items():
             message = message.replace(contraction, replacement)
+
+        # Replace two-word quantifiers, diminishers, and conjunctions with hyphenated versions
+        message = re.sub(r'\b(a lot)\b', 'a-lot', message)
+        message = re.sub(r'\b(a little)\b', 'a-little', message)
+        message = re.sub(r'\b(not really)\b', 'not-really', message)
+        message = re.sub(r'\b(kind of)\b', 'kind-of', message)
+        message = re.sub(r'\b(sort of)\b', 'sort-of', message)
+        message = re.sub(r'\b(a bit)\b', 'a-bit', message)
+
+        # Conjunctions handling - replacing two-word conjunctions with hyphenated versions
+        message = re.sub(r'\b(so that)\b', 'so-that', message)
+        message = re.sub(r'\b(even though)\b', 'even-though', message)
+        message = re.sub(r'\b(provided that)\b', 'provided-that', message)
+        message = re.sub(r'\b(in case)\b', 'in-case', message)
+
+        # Replace 'like a' and 'like an' with 'like-a' and 'like-an'
+        message = re.sub(r'\blike a\b', 'like-a', message)
+        message = re.sub(r'\blike an\b', 'like-an', message)
 
         # Remove unwanted punctuation but keep .?!
         message = ''.join([char for char in message if char not in ["'"]])
