@@ -25,12 +25,14 @@ v.create.restype = ctypes.POINTER(SentimentVector)
 v.s2v.restype = ctypes.POINTER(SentimentVector)
 v.v2s.restype = ctypes.c_double
 v.combine.restype = ctypes.POINTER(SentimentVector)
+v.toString.restype = ctypes.c_char_p
 
 # Set argument types for functions
 v.create.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_double]
 v.s2v.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_double]
 v.v2s.argtypes = [ctypes.POINTER(SentimentVector)]
 v.combine.argtypes = [ctypes.POINTER(SentimentVector), ctypes.POINTER(SentimentVector)]
+v.toString.argtypes = [ctypes.POINTER(SentimentVector)]
 
 def _create(magnitude, polarity, intensity):
     return v.create(magnitude, polarity, intensity)
@@ -45,4 +47,6 @@ def combine(v1, v2):
     return v.combine(v1, v2)
 
 def toString(vector):
-    return v.toString(vector)
+    # Convert C string to Python string
+    c_str = v.toString(vector)
+    return c_str.decode('utf-8')
