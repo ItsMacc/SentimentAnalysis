@@ -37,8 +37,8 @@ fabulous
 fair  
 faithful  
 favorable  
-friendly  
-generous  
+friendly
+generous
 genuine  
 graceful  
 grateful  
