@@ -26,10 +26,25 @@ class SentimentAnalyzer:
                     "neither", "unless", "until", "when", "if", "as",
                     "in-case", "provided-that", "even-though", "so-that"}
 
-    def __init__(self, positive_words_file, negative_words_file, model="1.0"):
+    def __init__(self, wordset="normal", positive_words_file=None,
+                 negative_words_file=None, model="1.0"):
         """
         Initializes the SentimentAnalyzer with lists of positive and negative words.
         """
+        if wordset == "normal":
+            # Default normal wordset
+            positive_words_file = "words/positive_words.txt"
+            negative_words_file = "words/negative_words.txt"
+
+        if wordset not in ["normal", "custom"]:
+            raise ValueError(
+                "Invalid wordset. Choose from 'normal' or 'custom'")
+
+        if wordset == "custom" and (
+                positive_words_file is None or negative_words_file is None):
+            raise ValueError(
+                "Please provide file paths for custom positive and negative words")
+
         self.__positive_words = self.__load_words_from_file(positive_words_file)
         self.__negative_words = self.__load_words_from_file(negative_words_file)
 
@@ -39,7 +54,7 @@ class SentimentAnalyzer:
 
         self.model = model
 
-    def evaluate_sentiment(self, message):
+    def evaluate_sentiment(self, message, verbose=False):
         """
         Evaluates the sentiment of the given message.
         """
@@ -48,17 +63,36 @@ class SentimentAnalyzer:
 
         sentiment_vectors = []
 
+        # Compute sentiment for each sentence
         for sentence in sentence_parts:
             part_vector = self.__compute_sentiment(sentence)
             sentiment_vectors.append(part_vector)
+
+        # Log the first sentence and its sentiment vector (before any combination)
+        if verbose and len(sentiment_vectors) > 0:
+            self.__log_details(message, sentence_parts[0], sentiment_vectors[0])
 
         # Combine all sentiment vectors into one
         sentiment_vector = sentiment_vectors[0] if sentiment_vectors else None
 
         for i in range(1, len(sentiment_vectors)):
-            sentiment_vector = vectorizer.combine(sentiment_vector, sentiment_vectors[i])
+            sentiment_vector = vectorizer.combine(sentiment_vector,
+                                                  sentiment_vectors[i])
+            if verbose:
+                self.__log_details(message, sentence_parts[i],
+                                   sentiment_vectors[i])
 
-        return vectorizer.v2s(sentiment_vector) if sentiment_vector else 0
+        final_score = vectorizer.v2s(sentiment_vector) if sentiment_vector else 0
+
+        # Print the final score if verbose is True
+        if verbose:
+            print(f"Combined Sentiment Vector: "
+                  f"{vectorizer.toString(sentiment_vector)}", end="")
+            print(f"Final Score: {final_score}\n")
+        else:
+            print(final_score)
+
+        return final_score
 
     # ---- HELPER FUNCTIONS ----
 
@@ -68,8 +102,10 @@ class SentimentAnalyzer:
         negations, quantifiers, and diminishers.
         """
         words = sentence.split()
-        positive_count = sum(1 for word in words if word in self.__positive_words)
-        negative_count = sum(1 for word in words if word in self.__negative_words)
+        positive_count = sum(
+            1 for word in words if word in self.__positive_words)
+        negative_count = sum(
+            1 for word in words if word in self.__negative_words)
         negation_count = sum(1 for word in words if word in self.NEGATIONS)
 
         quantifier_multiplier = 1
@@ -79,15 +115,18 @@ class SentimentAnalyzer:
         for word in words:
             # Apply quantifiers
             if word in self.QUANTIFIERS:
-                quantifier_multiplier *= self.__apply_quantifier(word, previous_word)
+                quantifier_multiplier *= self.__apply_quantifier(word,
+                                                                 previous_word)
             # Apply diminishers
             if word in self.DIMINISHERS:
-                diminisher_multiplier *= self.__apply_diminisher(word, previous_word)
+                diminisher_multiplier *= self.__apply_diminisher(word,
+                                                                 previous_word)
 
             previous_word = word
 
         base_sentiment = positive_count - negative_count
-        negation_adjustment = self.__adjust_for_negations(base_sentiment, negation_count)
+        negation_adjustment = self.__adjust_for_negations(base_sentiment,
+                                                          negation_count)
 
         # Return the sentiment vector
         intensity = quantifier_multiplier * diminisher_multiplier
@@ -134,7 +173,6 @@ class SentimentAnalyzer:
         Splits the input text into parts based on sentence-ending punctuation (.?!)
         and conjunctions, while preserving punctuation.
         """
-
         sentence_parts = re.split(r'([.?!])', text)
 
         # Reconstruct sentences by pairing punctuation back with preceding text
@@ -165,7 +203,8 @@ class SentimentAnalyzer:
             conjunction_indices.append(len(words))
 
             split_sentences = [
-                " ".join(words[conjunction_indices[i]:conjunction_indices[i + 1]])
+                " ".join(
+                    words[conjunction_indices[i]:conjunction_indices[i + 1]])
                 for i in range(len(conjunction_indices) - 1)
             ]
 
@@ -229,3 +268,21 @@ class SentimentAnalyzer:
         except IOError:
             raise ValueError(f"Unable to read file at {file_path}")
 
+    @staticmethod
+    def __log_details(message, sentence, sentiment_vector):
+        """
+        Logs the details of the sentence, sentiment vector.
+        """
+        # Log the sentence and its sentiment vector
+        s = (f"Message: {message}\n\tSentence: {sentence}\n\t"
+             f"{vectorizer.toString(sentiment_vector)}")
+        print(s)
+
+    @staticmethod
+    def __is_continuation_of_previous_sentence(sentence):
+        """
+        Determines if the sentence is logically connected to the previous one.
+        This is based on conjunctions like 'and', 'but', etc.
+        """
+        words = sentence.split()
+        return any(word in words for word in SentimentAnalyzer.CONJUNCTIONS)
