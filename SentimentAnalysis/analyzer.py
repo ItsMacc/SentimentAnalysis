@@ -76,8 +76,7 @@ class SentimentAnalyzer:
         sentiment_vector = sentiment_vectors[0] if sentiment_vectors else None
 
         for i in range(1, len(sentiment_vectors)):
-            sentiment_vector = vectorizer.combine(sentiment_vector,
-                                                  sentiment_vectors[i])
+            sentiment_vector = vectorizer.combine(sentiment_vector, sentiment_vectors[i])
             if verbose:
                 self.__log_details(message, sentence_parts[i],
                                    sentiment_vectors[i])
