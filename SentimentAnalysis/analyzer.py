@@ -98,8 +98,8 @@ class SentimentAnalyzer:
 
     def __compute_sentiment(self, sentence):
         """
-        Computes the sentiment of a sentence, considering positive and negative LanguageAssets,
-        negations, quantifiers, and diminishers.
+        Computes the sentiment of a sentence, considering positive and negative
+        words, negations, quantifiers, and diminishers.
         """
         words = sentence.split()
         positive_count = sum(
@@ -274,12 +274,3 @@ class SentimentAnalyzer:
         s = (f"Message: {message}\n\tSentence: {sentence}\n\t"
              f"{vectorizer.toString(sentiment_vector)}")
         print(s)
-
-    @staticmethod
-    def __is_continuation_of_previous_sentence(sentence):
-        """
-        Determines if the sentence is logically connected to the previous one.
-        This is based on conjunctions like 'and', 'but', etc.
-        """
-        words = sentence.split()
-        return any(word in words for word in SentimentAnalyzer.CONJUNCTIONS)
