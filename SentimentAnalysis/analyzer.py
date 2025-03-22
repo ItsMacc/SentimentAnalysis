@@ -44,33 +44,23 @@ class SentimentAnalyzer:
         Evaluates the sentiment of the given message.
         """
         cleaned_message = self.__clean_message(message)
+        sentence_parts = self.__split_sentences(cleaned_message)
 
-        sentiment_vector = None
+        sentiment_vectors = []
 
-        # Base case: No conjunctions present
-        if not any(conjunction in message for conjunction in self.CONJUNCTIONS):
-            sentiment_vector = self.__compute_sentiment(cleaned_message)
-        else:
-            # If conjunctions are present, split the message and evaluate each part
-            sentence_parts = self.__handle_conjunctions(message)
-            sentiment_vectors = []
+        for sentence in sentence_parts:
+            part_vector = self.__compute_sentiment(sentence)
+            sentiment_vectors.append(part_vector)
 
-            for sentence in sentence_parts:
-                # Compute sentiment for each part
-                part_vector = self.__compute_sentiment(sentence)
-                sentiment_vectors.append(part_vector)
+        # Combine all sentiment vectors into one
+        sentiment_vector = sentiment_vectors[0] if sentiment_vectors else None
 
-            # Combine all sentiment vectors into one
-            if sentiment_vectors:
-                sentiment_vector = sentiment_vectors[0]
-                for i in range(1, len(sentiment_vectors)):
-                    sentiment_vector = vectorizer.combine(sentiment_vector, sentiment_vectors[i])
+        for i in range(1, len(sentiment_vectors)):
+            sentiment_vector = vectorizer.combine(sentiment_vector, sentiment_vectors[i])
 
-        # Return the final sentiment score
         return vectorizer.v2s(sentiment_vector) if sentiment_vector else 0
 
     # ---- HELPER FUNCTIONS ----
-
 
     def __compute_sentiment(self, sentence):
         """
@@ -139,35 +129,55 @@ class SentimentAnalyzer:
 
         return 1
 
-    def __handle_conjunctions(self, sentence):
+    def __split_sentences(self, text):
         """
-        Splits the sentence into parts based on conjunctions.
+        Splits the input text into parts based on sentence-ending punctuation (.?!)
+        and conjunctions, while preserving punctuation.
 
         Args:
-            sentence (str): The input sentence to be split.
+            text (str): The input text to be split.
 
         Returns:
-            list: A list of sentence parts, split at conjunctions.
+            list: A list of sentence parts.
         """
-        words = sentence.split()
-        conjunction_indices = [0]  # List to store indices of conjunctions
+        # Split at . ? ! but keep them in the result
+        sentence_parts = re.split(r'([.?!])', text)
 
-        # Find indices of conjunctions in the sentence
-        for i, word in enumerate(words):
-            if word in self.CONJUNCTIONS:
-                conjunction_indices.append(
-                    i + 1)  # Append index after the conjunction
+        # Reconstruct sentences by pairing punctuation back with preceding text
+        reconstructed_sentences = []
+        buffer = ""
 
-        conjunction_indices.append(
-            len(words))  # Append the final index (end of sentence)
+        for part in sentence_parts:
+            if part in ".?!":
+                buffer += part  # Attach punctuation to the sentence
+                reconstructed_sentences.append(buffer.strip())
+                buffer = ""
+            else:
+                buffer = part.strip()
 
-        # Split the sentence into parts based on conjunction indices
-        sentence_parts = [
-            " ".join(words[conjunction_indices[i]:conjunction_indices[i + 1]])
-            for i in range(len(conjunction_indices) - 1)
-        ]
+        if buffer:  # Catch any leftover part
+            reconstructed_sentences.append(buffer)
 
-        return sentence_parts
+        # Further split each sentence by conjunctions
+        final_parts = []
+        for sentence in reconstructed_sentences:
+            words = sentence.split()
+            conjunction_indices = [0]
+
+            for i, word in enumerate(words):
+                if word in self.CONJUNCTIONS:
+                    conjunction_indices.append(i + 1)
+
+            conjunction_indices.append(len(words))
+
+            split_sentences = [
+                " ".join(words[conjunction_indices[i]:conjunction_indices[i + 1]])
+                for i in range(len(conjunction_indices) - 1)
+            ]
+
+            final_parts.extend(split_sentences)
+
+        return final_parts
 
     @staticmethod
     def __clean_message(message):
@@ -190,21 +200,9 @@ class SentimentAnalyzer:
         for contraction, replacement in contractions.items():
             message = message.replace(contraction, replacement)
 
-        # Remove unwanted punctuation
+        # Remove unwanted punctuation but keep .?!
         message = ''.join([char for char in message if char not in ["'"]])
         message = ' '.join(message.split())
-
-        # Handle multi-word quantifiers/diminishers
-        replacements = {
-            "a little": "a-little", "a lot": "a-lot", "kind of": "kind-of",
-            "a bit": "a-bit", "sort of": "sort-of", "not really": "not-really",
-            "in case": "in-case", "provided that": "provided-that",
-            "even though": "even-though", "so that": "so-that",
-            "due to": "due-to"
-        }
-
-        for old, new in replacements.items():
-            message = message.replace(old, new)
 
         return message
 
@@ -213,13 +211,9 @@ class SentimentAnalyzer:
         """
         Loads a list of words from the given file.
         """
-        if file_path.endswith('.txt'):
-            try:
-                with open(file_path, 'r') as file:
-                    return [line.strip() for line in file.readlines()]
-            except IOError:
-                raise ValueError(f"Unable to read file at {file_path}")
-        return []
+        try:
+            with open(file_path, 'r') as file:
+                return [line.strip() for line in file.readlines()]
+        except IOError:
+            raise ValueError(f"Unable to read file at {file_path}")
 
-    def __log_analysis_details(self):
-        pass
