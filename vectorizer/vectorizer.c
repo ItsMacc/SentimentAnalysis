@@ -61,16 +61,14 @@ struct SentimentVector* combine(struct SentimentVector* v1, struct SentimentVect
     // Case 2: Opposite polarity
     else if (v1->polarity * v2->polarity == -1) {
         // Calculate the net magnitude
-        new_magnitude = v1->magnitude * v1->polarity + v2->magnitude * v2->polarity;
+        new_magnitude = abs(v1->magnitude) + abs(v2->magnitude);
 
         // Determine the resulting polarity based on the net magnitude
-        if (new_magnitude >= 0) {
+        if (v1->magnitude * v2->magnitude >= 0) {
             new_polarity = 1; // Positive
-        } else if (new_magnitude < 0) {
+        } else if (v1->magnitude * v2->magnitude < 0) {
             new_polarity = -1; // Negative
         }
-        // Take the absolute value of the net magnitude
-        new_magnitude = abs(new_magnitude);
     }
     // Case 3: One or both polarities are zero
     else {
