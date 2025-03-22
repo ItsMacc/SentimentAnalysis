@@ -133,14 +133,8 @@ class SentimentAnalyzer:
         """
         Splits the input text into parts based on sentence-ending punctuation (.?!)
         and conjunctions, while preserving punctuation.
-
-        Args:
-            text (str): The input text to be split.
-
-        Returns:
-            list: A list of sentence parts.
         """
-        # Split at . ? ! but keep them in the result
+
         sentence_parts = re.split(r'([.?!])', text)
 
         # Reconstruct sentences by pairing punctuation back with preceding text
