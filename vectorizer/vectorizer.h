@@ -34,6 +34,6 @@ struct SentimentVector* combine(struct SentimentVector* v1, struct SentimentVect
 double compute_effective_intensity(struct SentimentVector* v);
 
 // A function to print details about Sentiment Vector
-void toString(struct SentimentVector* v);
+char* toString(struct SentimentVector* v);
 
 #endif
