@@ -35,7 +35,7 @@ double v2s(struct SentimentVector* v) {
 
     // Calculate score
     double score = base_sentiment * v->polarity * v->intensity;
-    return atan(score) * 0.691;
+    return atan(score) * 0.636;
 }
 
 
