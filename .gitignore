@@ -13,5 +13,5 @@ __pycache__/
 .DS_Store
 
 # Ignore test files
-words
+LanguageAssets
 test.py

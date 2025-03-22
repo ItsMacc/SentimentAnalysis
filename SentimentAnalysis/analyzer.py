@@ -26,27 +26,28 @@ class SentimentAnalyzer:
                     "neither", "unless", "until", "when", "if", "as",
                     "in-case", "provided-that", "even-though", "so-that"}
 
-    def __init__(self, wordset="normal", positive_words_file=None,
+    def __init__(self, wordset="standard", positive_words_file=None,
                  negative_words_file=None, model="1.0"):
         """
-        Initializes the SentimentAnalyzer with lists of positive and negative words.
+        Initializes the SentimentAnalyzer with lists of positive and negative LanguageAssets.
         """
-        if wordset == "normal":
-            # Default normal wordset
-            positive_words_file = "words/positive_words.txt"
-            negative_words_file = "words/negative_words.txt"
 
-        if wordset not in ["normal", "custom"]:
+        if wordset not in ["standard", "extended", "custom"]:
             raise ValueError(
-                "Invalid wordset. Choose from 'normal' or 'custom'")
+                "Invalid wordset. Choose from 'standard' or 'custom'")
+        else:
+            if wordset != "custom":
+                positive_words_path = f"LanguageAssets/{wordset}/positive_words.txt"
+                negative_words_path = f"LanguageAssets/{wordset}/negative_words.txt"
+            else:
+                if positive_words_file is None or negative_words_file is None:
+                    raise ValueError("Please provide path to custom word files")
+                else:
+                    positive_words_path = positive_words_file
+                    negative_words_path = negative_words_file
 
-        if wordset == "custom" and (
-                positive_words_file is None or negative_words_file is None):
-            raise ValueError(
-                "Please provide file paths for custom positive and negative words")
-
-        self.__positive_words = self.__load_words_from_file(positive_words_file)
-        self.__negative_words = self.__load_words_from_file(negative_words_file)
+        self.__positive_words = self.__load_words_from_file(positive_words_path)
+        self.__negative_words = self.__load_words_from_file(negative_words_path)
 
         # Initialize variables to track the entire conversation
         self.__previous_sentiment_score = 0
@@ -97,7 +98,7 @@ class SentimentAnalyzer:
 
     def __compute_sentiment(self, sentence):
         """
-        Computes the sentiment of a sentence, considering positive and negative words,
+        Computes the sentiment of a sentence, considering positive and negative LanguageAssets,
         negations, quantifiers, and diminishers.
         """
         words = sentence.split()
@@ -114,18 +115,15 @@ class SentimentAnalyzer:
         for word in words:
             # Apply quantifiers
             if word in self.QUANTIFIERS:
-                quantifier_multiplier *= self.__apply_quantifier(word,
-                                                                 previous_word)
+                quantifier_multiplier *= self.__apply_quantifier(word, previous_word)
             # Apply diminishers
             if word in self.DIMINISHERS:
-                diminisher_multiplier *= self.__apply_diminisher(word,
-                                                                 previous_word)
+                diminisher_multiplier *= self.__apply_diminisher(word, previous_word)
 
             previous_word = word
 
         base_sentiment = positive_count - negative_count
-        negation_adjustment = self.__adjust_for_negations(base_sentiment,
-                                                          negation_count)
+        negation_adjustment = self.__adjust_for_negations(base_sentiment, negation_count)
 
         # Return the sentiment vector
         intensity = quantifier_multiplier * diminisher_multiplier
@@ -259,7 +257,7 @@ class SentimentAnalyzer:
     @staticmethod
     def __load_words_from_file(file_path):
         """
-        Loads a list of words from the given file.
+        Loads a list of LanguageAssets from the given file.
         """
         try:
             with open(file_path, 'r') as file:
