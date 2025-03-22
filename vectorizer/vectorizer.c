@@ -53,17 +53,18 @@ struct SentimentVector* combine(struct SentimentVector* v1, struct SentimentVect
 
     // Case 1: Same polarity
     if (v1->polarity * v2->polarity == 1) {
-        new_magnitude = v1->magnitude + v2->magnitude;
-        new_polarity = (eff_intensity1 > eff_intensity2) ? v1->polarity : v2->polarity;
+        new_magnitude = (v1->magnitude) + (v2->magnitude);
+        new_polarity = v1->polarity;
         new_intensity = (eff_intensity1 > eff_intensity2) ? v1->intensity : v2->intensity;
 
-        if (v1->magnitude * v1->polarity * v2->magnitude * v2->polarity > 0) {
+        if (v1->magnitude * v2->magnitude > 0) {
             new_polarity = v1->polarity;
-        } else if (v1->magnitude * v1->polarity * v2->magnitude * v2->polarity < 0) {
+        } else if (v1->magnitude * v2->magnitude < 0) {
             new_polarity = -1;
-        } else {
-            new_magnitude = (v1->magnitude == 0 && v2->magnitude == 0) ? 0 : 
-                            (eff_intensity1 > eff_intensity2) ? v1->intensity : v2->intensity;
+        } else if (v1->magnitude == 0 && v2->magnitude == 0) {
+            new_magnitude = (eff_intensity1 > eff_intensity2) ? 
+            (v1->intensity == 1 ? 0 : v1->intensity) : 
+            (v2->intensity == 1 ? 0 : v2->intensity);
         }
     } 
     // Case 2: Opposite polarity
@@ -74,8 +75,9 @@ struct SentimentVector* combine(struct SentimentVector* v1, struct SentimentVect
         if (v1->magnitude * v2->magnitude * v1->polarity * v2->polarity > 0) {
             new_magnitude = abs(v1->magnitude) + abs(v2->magnitude);
         } else {
-            new_magnitude = (v1->magnitude == 0 && v2->magnitude == 0) ? 0 : 
-                            (eff_intensity1 > eff_intensity2) ? v1->intensity : v2->intensity;
+            new_magnitude = (eff_intensity1 > eff_intensity2) ? 
+            (v1->intensity == 1 ? 0 : v1->intensity) : 
+            (v2->intensity == 1 ? 0 : v2->intensity);
         }
     }
 
@@ -90,33 +92,15 @@ double compute_effective_intensity(struct SentimentVector* v) {
 }
 
 // A function to print details about Sentiment Vector
-void toString(struct SentimentVector* v) {
-    printf("SentimentVector: [magnitude: %d, polarity: %d, intensity: %.4f]\n", v->magnitude, v->polarity, v->intensity);
+char* toString(struct SentimentVector* v) {
+    static char result[100];
+
+    snprintf(result, sizeof(result), "SentimentVector: [magnitude: %d, polarity: %d, intensity: %.4f]\n", v->magnitude, v->polarity, v->intensity);
+
+    return result;
 }
 
 
 int main() {
-    // Example usage
-    // struct SentimentVector* v1 = create(3, 1, 1.2);
-    // struct SentimentVector* v2 = create(3, -1, 1.5);
-
-    // Combine the vectors
-    // struct SentimentVector* final = combine(v1, v2);
-    // toString(final);
-
-    // Calculate scores
-    // double score = v2s(final);
-    // double s1_score = v2s(v1);
-    // double s2_score = v2s(v2);
-
-    // printf("Final score is: %.4f\n", score);
-    // printf("v1 score is: %.4f\n", s1_score);
-    // printf("v2 score is: %.4f\n", s2_score);
-
-    // Free memory
-    // free(v1);
-    // free(v2);
-    // free(final);
-
     return 0;
 }
