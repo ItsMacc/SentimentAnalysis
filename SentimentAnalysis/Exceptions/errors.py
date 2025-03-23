@@ -27,10 +27,11 @@ class ModelNotSupportedError(Exception):
         self.functionality = functionality
 
         # Construct the error message
+        index = self._models.index(current_model) + 1
         message = (
             f"The current model ({current_model}) does not support "
             f"the requested functionality: {functionality or 'unknown'}. "
-            f"Please upgrade your model to {self._models[1:]}."
+            f"Please upgrade your model to {self._models[index:]}."
         )
 
         super().__init__(message)
