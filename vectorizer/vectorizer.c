@@ -51,7 +51,7 @@ struct SentimentVector* combine(struct SentimentVector* v1, struct SentimentVect
     double eff_intensity1 = compute_effective_intensity(v1);
     double eff_intensity2 = compute_effective_intensity(v2);
 
-    new_intensity = (eff_intensity1 > eff_intensity2) ? v1->intensity : v2->intensity;;
+    new_intensity = (eff_intensity1 > eff_intensity2) ? v1->intensity : v2->intensity;
 
     // Case 1: Same polarity
     if (v1->polarity * v2->polarity == 1) {
@@ -63,11 +63,13 @@ struct SentimentVector* combine(struct SentimentVector* v1, struct SentimentVect
         // Calculate the net magnitude
         new_magnitude = abs(v1->magnitude) + abs(v2->magnitude);
 
-        // Determine the resulting polarity based on the net magnitude
-        if (v1->magnitude * v2->magnitude >= 0) {
+        // Determine the resulting polarity
+        if (v1->magnitude * v2->magnitude > 0) {
             new_polarity = 1; // Positive
         } else if (v1->magnitude * v2->magnitude < 0) {
             new_polarity = -1; // Negative
+        } else {
+            new_polarity = (eff_intensity1 > eff_intensity2) ? v1->polarity : v2->polarity;
         }
     }
     // Case 3: One or both polarities are zero
