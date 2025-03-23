@@ -75,7 +75,7 @@ struct SentimentVector* combine(struct SentimentVector* v1, struct SentimentVect
     // Case 3: One or both polarities are zero
     else {
         // Combine magnitudes (considering their signs and polarities)
-        new_magnitude = v1->magnitude * v1->polarity + v2->magnitude * v2->polarity;
+        new_magnitude = v1->magnitude + v2->magnitude;
 
         // Determine the resulting polarity based on the net magnitude
         if (new_magnitude >= 0) {
