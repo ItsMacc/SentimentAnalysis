@@ -1,7 +1,8 @@
 import re
-from Vectorizer import vectorizer
 from SentimentAnalysis.Exceptions.errors import *
 from SentimentAnalysis.analyzer_2_0 import *
+from SentimentAnalysis.Algorithms.sentiment_algorithms import *
+
 
 class SentimentAnalyzer:
     # Constants for negations, quantifiers, diminishers, and conjunctions
@@ -55,10 +56,6 @@ class SentimentAnalyzer:
         self.__positive_words = self.__load_words_from_file(positive_words_path)
         self.__negative_words = self.__load_words_from_file(negative_words_path)
 
-        # Initialize variables to track the entire conversation
-        self.__previous_sentiment_score = 0
-        self.__decay_factor = 0.65  # Exponential decay factor for previous sentiment
-
         # Initialize model version
         self.model = model
 
@@ -66,40 +63,53 @@ class SentimentAnalyzer:
         """
         Evaluates the sentiment of the given message.
         """
-        cleaned_message = self.__clean_message(message)
-        sentence_parts = self.__split_sentences(cleaned_message)
-
+        sentence_parts = self.__split_sentences(message)
         sentiment_vectors = []
 
-        # Compute sentiment for each sentence
+        # Implementing detailed logging
+        verbose_log = [f"Proccessing text: '{message}'\n",
+                       f"Sentences: {sentence_parts}\n"]
+
         for sentence in sentence_parts:
-            part_vector = self.__compute_sentiment(sentence)
-            sentiment_vectors.append(part_vector)
+            sentence = self.__clean_message(sentence)
 
-        # Log the first sentence and its sentiment vector (before any combination)
-        if verbose and len(sentiment_vectors) > 0:
-            self.__log_details(message, sentence_parts[0], sentiment_vectors[0])
+            # Logging details
+            verbose_log.append(f"\tCurrent Sentence: {sentence}\n")
 
-        # Combine all sentiment vectors into one
-        sentiment_vector = sentiment_vectors[0] if sentiment_vectors else None
+            # Check if sentence has conjunctions present
+            conjunctions_split = self.__handle_conjunctions(sentence)
+            if len(conjunctions_split) > 1:
+                # Logging details
+                verbose_log.append(f"\t\tConjunctions present:\t"
+                                   f"{conjunctions_split}\n")
 
-        for i in range(1, len(sentiment_vectors)):
-            sentiment_vector = vectorizer.combine(sentiment_vector, sentiment_vectors[i])
-            if verbose:
-                self.__log_details(message, sentence_parts[i],
-                                   sentiment_vectors[i])
+                v1 = self.__compute_sentiment(conjunctions_split[0])
+                v2 = self.__compute_sentiment(conjunctions_split[1])
+                combined_score = (vectorizer.combine(v1, v2))
+                sentiment_vectors.append(combined_score)
 
-        final_score = vectorizer.v2s(sentiment_vector) if sentiment_vector else 0
+                # Logging details
+                verbose_log.append(f"\t\tCombined Score: \t\t"
+                                   f"{vectorizer.v2s(combined_score)}\n")
+            else:
+                sentiment_vector = self.__compute_sentiment(sentence)
+                sentiment_vectors.append(sentiment_vector)
 
-        # Print the final score if verbose is True
+                # Logging details
+                verbose_log.append(f"\tSentiment score: "
+                                   f"{vectorizer.v2s(sentiment_vector)}\n")
+
+        # Calculate the score for all vectors
+        score = momentum_based_sentiment(sentiment_vectors)
+
+        # Logging details
+        verbose_log.append(f"\nfinal score: {score}")
+
+        # Print details
         if verbose:
-            print(f"Combined Sentiment Vector: "
-                  f"{vectorizer.toString(sentiment_vector)}", end="")
-            print(f"Final Score: {final_score}\n")
-        else:
-            print(final_score)
+            print("".join(verbose_log))
 
-        return final_score
+        return score
 
     # ---- HELPER FUNCTIONS ----
 
@@ -172,49 +182,36 @@ class SentimentAnalyzer:
 
         return 1
 
-    def __split_sentences(self, text):
+    @staticmethod
+    def __split_sentences(text):
         """
         Splits the input text into parts based on sentence-ending punctuation (.?!)
-        and conjunctions, while preserving punctuation.
+        and conjunctions, while preserving punctuation. Removes empty sentences.
         """
         sentence_parts = re.split(r'([.?!])', text)
-
-        # Reconstruct sentences by pairing punctuation back with preceding text
         reconstructed_sentences = []
-        buffer = ""
 
         for part in sentence_parts:
-            if part in ".?!":
-                buffer += part  # Attach punctuation to the sentence
-                reconstructed_sentences.append(buffer.strip())
-                buffer = ""
-            else:
-                buffer = part.strip()
+            if part not in ".!?":
+                reconstructed_sentences.append(part.strip())
 
-        if buffer:  # Catch any leftover part
-            reconstructed_sentences.append(buffer)
+        return reconstructed_sentences
 
+    def __handle_conjunctions(self, message):
         # Further split each sentence by conjunctions
-        final_parts = []
-        for sentence in reconstructed_sentences:
-            words = sentence.split()
-            conjunction_indices = [0]
+        words = message.split()
+        conjunction_indices = [0]
 
-            for i, word in enumerate(words):
-                if word in self.CONJUNCTIONS:
-                    conjunction_indices.append(i + 1)
+        for i, w in enumerate(words):
+            if w in self.CONJUNCTIONS:
+                conjunction_indices.append(i + 1)
 
-            conjunction_indices.append(len(words))
+        conjunction_indices.append(len(words))
 
-            split_sentences = [
-                " ".join(
-                    words[conjunction_indices[i]:conjunction_indices[i + 1]])
-                for i in range(len(conjunction_indices) - 1)
-            ]
+        split_sentences = [" ".join(words[conjunction_indices[i] : conjunction_indices[i+1]])for
+                           i in range(len(conjunction_indices) -1)]
 
-            final_parts.extend(split_sentences)
-
-        return final_parts
+        return split_sentences
 
     @staticmethod
     def __clean_message(message):
@@ -223,21 +220,18 @@ class SentimentAnalyzer:
         """
         message = message.lower()
 
-        # Handle contractions
         contractions = {
             "wasn't": "wasnt", "can't": "cant", "don't": "dont",
-            "didn't": "didnt",
-            "isn't": "isnt", "won't": "wont", "haven't": "havent",
-            "shouldn't": "shouldnt",
-            "wouldn't": "wouldnt", "couldn't": "couldnt", "you're": "youre",
-            "i'm": "im",
+            "didn't": "didnt", "isn't": "isnt", "won't": "wont",
+            "haven't": "havent", "shouldn't": "shouldnt", "wouldn't": "wouldnt",
+            "couldn't": "couldnt", "you're": "youre", "i'm": "im",
             "he's": "hes", "she's": "shes", "it's": "its", "they're": "theyre"
         }
 
         for contraction, replacement in contractions.items():
             message = message.replace(contraction, replacement)
 
-        # Replace two-word quantifiers, diminishers, and conjunctions with hyphenated versions
+        # Replace multi-word quantifiers and diminishers
         message = re.sub(r'\b(a lot)\b', 'a-lot', message)
         message = re.sub(r'\b(a little)\b', 'a-little', message)
         message = re.sub(r'\b(not really)\b', 'not-really', message)
@@ -245,18 +239,15 @@ class SentimentAnalyzer:
         message = re.sub(r'\b(sort of)\b', 'sort-of', message)
         message = re.sub(r'\b(a bit)\b', 'a-bit', message)
 
-        # Conjunctions handling - replacing two-word conjunctions with hyphenated versions
+        # Handle conjunctions and 'like a' / 'like an'
         message = re.sub(r'\b(so that)\b', 'so-that', message)
         message = re.sub(r'\b(even though)\b', 'even-though', message)
         message = re.sub(r'\b(provided that)\b', 'provided-that', message)
         message = re.sub(r'\b(in case)\b', 'in-case', message)
-
-        # Replace 'like a' and 'like an' with 'like-a' and 'like-an'
         message = re.sub(r'\blike a\b', 'like-a', message)
         message = re.sub(r'\blike an\b', 'like-an', message)
 
-        # Remove unwanted punctuation but keep .?!
-        message = ''.join([char for char in message if char not in ["'"]])
+        message = ''.join([char for char in message if char not in ["'","."]])
         message = ' '.join(message.split())
 
         return message
@@ -271,13 +262,3 @@ class SentimentAnalyzer:
                 return [line.strip() for line in file.readlines()]
         except IOError:
             raise ValueError(f"Unable to read file at {file_path}")
-
-    @staticmethod
-    def __log_details(message, sentence, sentiment_vector):
-        """
-        Logs the details of the sentence, sentiment vector.
-        """
-        # Log the sentence and its sentiment vector
-        s = (f"Message: {message}\n\tSentence: {sentence}\n\t"
-             f"{vectorizer.toString(sentiment_vector)}")
-        print(s)
