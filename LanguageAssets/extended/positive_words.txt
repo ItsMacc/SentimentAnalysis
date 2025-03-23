@@ -34,6 +34,7 @@ bubbly
 calm
 capable
 caring
+care
 charismatic
 charming
 cheerful
@@ -49,6 +50,7 @@ courageous
 courteous
 creative
 curious
+cute
 dazzling
 decisive
 dedicated
@@ -132,6 +134,7 @@ like
 liked
 lively
 love
+lovely
 loving
 loyal
 lucky
