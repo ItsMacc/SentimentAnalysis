@@ -1,6 +1,7 @@
 import re
 from Vectorizer import vectorizer
 from SentimentAnalysis.Exceptions.errors import *
+from SentimentAnalysis.analyzer_2_0 import *
 
 class SentimentAnalyzer:
     # Constants for negations, quantifiers, diminishers, and conjunctions
