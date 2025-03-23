@@ -39,7 +39,8 @@ faithful
 favorable  
 friendly
 generous
-genuine  
+genuine
+good
 graceful  
 grateful  
 hardworking  
