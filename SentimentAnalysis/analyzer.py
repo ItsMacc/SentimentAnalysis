@@ -1,6 +1,6 @@
 import re
 from Vectorizer import vectorizer
-
+from SentimentAnalysis.Exceptions.errors import *
 
 class SentimentAnalyzer:
     # Constants for negations, quantifiers, diminishers, and conjunctions
@@ -32,16 +32,21 @@ class SentimentAnalyzer:
         Initializes the SentimentAnalyzer with lists of positive and negative LanguageAssets.
         """
 
+        # Validate model
+        current_models = ["1.0", "2.0", "3.0"]
+        if model not in current_models:
+            raise InvalidModelError(model)
+
+        # Validate wordset
         if wordset not in ["standard", "extended", "custom"]:
-            raise ValueError(
-                "Invalid wordset. Choose from 'standard' or 'custom'")
+            raise InvalidWordsetError(wordset)
         else:
             if wordset != "custom":
                 positive_words_path = f"LanguageAssets/{wordset}/positive_words.txt"
                 negative_words_path = f"LanguageAssets/{wordset}/negative_words.txt"
             else:
                 if positive_words_file is None or negative_words_file is None:
-                    raise ValueError("Please provide path to custom word files")
+                    raise MissingCustomFilesError()
                 else:
                     positive_words_path = positive_words_file
                     negative_words_path = negative_words_file
@@ -53,6 +58,7 @@ class SentimentAnalyzer:
         self.__previous_sentiment_score = 0
         self.__decay_factor = 0.65  # Exponential decay factor for previous sentiment
 
+        # Initialize model version
         self.model = model
 
     def evaluate_sentiment(self, message, verbose=False):
