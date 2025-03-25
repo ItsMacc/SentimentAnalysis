@@ -1,6 +1,5 @@
 import re
 from SentimentAnalysis.Exceptions.errors import *
-from SentimentAnalysis.analyzer_2_0 import *
 from SentimentAnalysis.Algorithms.sentiment_algorithms import *
 
 
@@ -29,15 +28,10 @@ class SentimentAnalyzer:
                     "in-case", "provided-that", "even-though", "so-that"}
 
     def __init__(self, wordset="standard", positive_words_file=None,
-                 negative_words_file=None, model="1.0"):
+                 negative_words_file=None):
         """
-        Initializes the SentimentAnalyzer with lists of positive and negative LanguageAssets.
+        Initializes the SentimentAnalyzer with lists of positive and negative words.
         """
-
-        # Validate model
-        current_models = ["1.0", "2.0", "3.0"]
-        if model not in current_models:
-            raise InvalidModelError(model)
 
         # Validate wordset
         if wordset not in ["standard", "extended", "custom"]:
@@ -56,8 +50,6 @@ class SentimentAnalyzer:
         self.__positive_words = self.__load_words_from_file(positive_words_path)
         self.__negative_words = self.__load_words_from_file(negative_words_path)
 
-        # Initialize model version
-        self.model = model
 
     def evaluate_sentiment(self, message, verbose=False):
         """
@@ -164,6 +156,22 @@ class SentimentAnalyzer:
             return 1 + (1 - diminisher_value)
         return diminisher_value
 
+    def __handle_conjunctions(self, message):
+        # Further split each sentence by conjunctions
+        words = message.split()
+        conjunction_indices = [0]
+
+        for i, w in enumerate(words):
+            if w in self.CONJUNCTIONS:
+                conjunction_indices.append(i + 1)
+
+        conjunction_indices.append(len(words))
+
+        split_sentences = [" ".join(words[conjunction_indices[i] : conjunction_indices[i+1]])for
+                           i in range(len(conjunction_indices) -1)]
+
+        return split_sentences
+
     @staticmethod
     def __adjust_for_negations(base_sentiment, negation_count):
         """
@@ -196,22 +204,6 @@ class SentimentAnalyzer:
                 reconstructed_sentences.append(part.strip())
 
         return reconstructed_sentences
-
-    def __handle_conjunctions(self, message):
-        # Further split each sentence by conjunctions
-        words = message.split()
-        conjunction_indices = [0]
-
-        for i, w in enumerate(words):
-            if w in self.CONJUNCTIONS:
-                conjunction_indices.append(i + 1)
-
-        conjunction_indices.append(len(words))
-
-        split_sentences = [" ".join(words[conjunction_indices[i] : conjunction_indices[i+1]])for
-                           i in range(len(conjunction_indices) -1)]
-
-        return split_sentences
 
     @staticmethod
     def __clean_message(message):
