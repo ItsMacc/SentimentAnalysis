@@ -76,14 +76,8 @@ struct SentimentVector* combine(struct SentimentVector* v1, struct SentimentVect
     else {
         // Combine magnitudes (considering their signs and polarities)
         new_magnitude = v1->magnitude + v2->magnitude;
-
-        // Determine the resulting polarity based on the net magnitude
-        if (new_magnitude >= 0) {
-            new_polarity = 1; // Positive
-        } else if (new_magnitude < 0) {
-            new_polarity = -1; // Negative
-        }
-
+        new_polarity =  v1->polarity + v2->polarity;
+        
         // Take the absolute value of the net magnitude
         new_magnitude = abs(new_magnitude);
     }
