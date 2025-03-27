@@ -1,4 +1,4 @@
-from Vectorizer import vectorizer
+from Vectorizer.v1 import vectorizer as v1
 
 
 def momentum_based_sentiment(sentiment_vectors, alpha=0.5, beta=0.5):
@@ -13,11 +13,11 @@ def momentum_based_sentiment(sentiment_vectors, alpha=0.5, beta=0.5):
     if not sentiment_vectors:
         return 0  # Default value if no input
 
-    prev_score = vectorizer.v2s(sentiment_vectors[0])  # Start with the first sentiment score
+    prev_score = v1.v2s(sentiment_vectors[0])  # Start with the first sentiment score
     momentum = 0  # Initialize momentum
 
     for vector in sentiment_vectors[1:]:
-        current_score = vectorizer.v2s(vector)
+        current_score = v1.v2s(vector)
         sentiment_change = current_score - prev_score  # Track sentiment shift
 
         # Update momentum based on sentiment shift direction
