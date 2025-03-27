@@ -1,6 +1,7 @@
 from SentimentAnalysis.model import SentimentAnalyzerModel
-from SentimentAnalysis.Algorithms.sentiment_algorithms import *
+from SentimentAnalysis.Algorithms.v1.sentiment_algorithms import *
 from Vectorizer.v1 import vectorizer
+
 
 class SentimentAnalyzerV1(SentimentAnalyzerModel):
     def __init__(self, wordset="standard", positive_words_file=None,

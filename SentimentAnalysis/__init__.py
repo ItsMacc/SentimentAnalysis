@@ -1,1 +1,2 @@
-from .analyzer import SentimentAnalyzer
+from SentimentAnalysis.v1.analyzer import SentimentAnalyzerV1
+from SentimentAnalysis.v2.analyzer import SentimentAnalyzerV2
