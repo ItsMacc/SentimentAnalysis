@@ -4,13 +4,13 @@ import platform
 # Determine the OS and set the shared library path
 if platform.system() == "Windows":
     # For Windows, load the .dll file
-    v = ctypes.CDLL("Vectorizer\\windows\\vectorizer.dll")
+    v = ctypes.CDLL("Vectorizer\\v1\\windows\\vectorizer.dll")
 elif platform.system() == "Darwin":
     # For macOS, load the .so file
-    v = ctypes.CDLL("Vectorizer/macOS/vectorizer.so")
+    v = ctypes.CDLL("Vectorizer/v1/macOS/vectorizer.so")
 elif platform.system() == "Linux":
     # For Linux, load the .so file
-    v = ctypes.CDLL("Vectorizer/linux/vectorizer.so")
+    v = ctypes.CDLL("Vectorizer/v1/linux/vectorizer.so")
 else:
     raise OSError("Unsupported operating system")
 
