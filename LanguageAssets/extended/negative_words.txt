@@ -234,6 +234,8 @@ exhausted
 exhausting
 fake
 fakely
+fail
+failure
 false
 falsely
 fear
